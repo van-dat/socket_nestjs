@@ -1,0 +1,44 @@
+# version :  '3.8'
+# services:
+#   dev-database: 
+#     image: postgres:16.4
+#     ports: 
+#       - 5434:5432
+#     environment:
+#       POSTGRES_USER: postgres
+#       POSTGRES_PASSWORD: Abcd12345
+#       POSTGRES_DB: dbtest
+#     networks:
+#       - nestjs-network
+# networks:
+#   nestjs-network:
+
+# Use root/example as user/password credentials
+version: '3.8'
+
+services:
+  app:
+    image: node:16   # Use the desired Node.js image or your application image
+    container_name: app-container
+    volumes:
+      - .:/usr/src/app
+    working_dir: /usr/src/app
+    command: npm start   # Or the command to run your app
+    environment:
+      - MONGO_URL=mongodb+srv://dangvandat1e:dJ28JAoaU6nwBilk@book.gmlwxdf.mongodb.net/  # Connection string to MongoDB
+    depends_on:
+      - mongo  # Ensure MongoDB is running before starting the app
+    ports:
+      - "3000:3000"  # Map the app port (adjust as needed)
+
+  mongo:
+    image: mongo:5.0   # MongoDB image
+    container_name: mongo-container
+    volumes:
+      - mongodbdata:/data/db  # Persist MongoDB data on the host
+    ports:
+      - "27017:27017"  # Expose MongoDB port
+
+volumes:
+  mongodbdata:
+
