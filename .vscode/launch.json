@@ -7,19 +7,15 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "Nest Debug",
-            "runtimeExecutable": "npm",
-            "runtimeArgs": [
-                "run",
-                "start:debug",
-                "--",
-                "--inspect-brk"
+            "name": "Launch Program",
+            "skipFiles": [
+                "<node_internals>/**"
             ],
-            "console": "integratedTerminal",
-            "restart": true,
-            "protocol": "auto",
-            "port": 9229,
-            "autoAttachChildProcesses": true
-        },
+            "program": "${file}",
+            "preLaunchTask": "tsc: build - tsconfig.json",
+            "outFiles": [
+                "${workspaceFolder}/dist/**/*.js"
+            ]
+        }
     ]
 }
