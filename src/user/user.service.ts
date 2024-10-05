@@ -5,6 +5,8 @@ import { Model } from 'mongoose';
 import { User } from './schemas/user.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import { hassPasswordHelper } from 'src/util/helper';
+import { v4 as uuidv4 } from 'uuid';
+import * as dayjs from 'dayjs'
 
 @Injectable()
 export class UserService {
@@ -27,7 +29,7 @@ export class UserService {
       throw new BadRequestException(`Email đã tồn tại! Vui lòng sử dụng email khác: ${email}`);
     }
     const hassPassword = await hassPasswordHelper(password)
-    const newUser = new this.userModel({ email, password: hassPassword, name });
+    const newUser = new this.userModel({ email, password: hassPassword, name, codeId: uuidv4(), codeExpire: dayjs().second(60) });
     return newUser.save()
   }
 
@@ -41,17 +43,17 @@ export class UserService {
         $facet: {
           data: [
             // { $sort: { age: -1 } },        
-            { $skip: skip },                
-            { $limit: +rowPage },           
-            { $project: { name: 1, email: 1, password: 1 } } 
+            { $skip: skip },
+            { $limit: +rowPage },
+            { $project: { name: 1, email: 1, password: 1, role: 1 } }
           ],
-          total: [                          
+          total: [
             { $count: "total" }
           ]
         }
       }
     ]);
-    const users = userAll[0].data;           
+    const users = userAll[0].data;
     const totalUsers = userAll[0].total[0]?.total || 0;
 
     return {
@@ -71,8 +73,8 @@ export class UserService {
     }
   }
 
- async findByEmail(email:string) {
-    return await this.userModel.findOne({email});
+  async findByEmail(email: string) {
+    return await this.userModel.findOne({ email });
   }
 
   async update(id: string, data: UpdateUserDto) {
