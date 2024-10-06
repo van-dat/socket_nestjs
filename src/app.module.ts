@@ -6,7 +6,6 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { JwtAuthGuard } from './auth/passport/jwt-auth.guard';
 import { APP_GUARD } from '@nestjs/core';
 import { EventGateway } from './event/event.gateway';
-import { AModule } from './a/a.module';
 
 @Module({
   imports: [AuthModule, UserModule,
@@ -18,7 +17,6 @@ import { AModule } from './a/a.module';
       }),
       inject: [ConfigService],
     }),
-    AModule
   ],
   providers : [ {
     provide: APP_GUARD,
