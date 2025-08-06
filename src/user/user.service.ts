@@ -6,7 +6,7 @@ import { User } from './schemas/user.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import { hassPasswordHelper } from 'src/util/helper';
 import { v4 as uuidv4 } from 'uuid';
-import * as dayjs from 'dayjs'
+import dayjs from 'dayjs'
 
 @Injectable()
 export class UserService {
