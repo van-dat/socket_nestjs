@@ -4,11 +4,11 @@ import { AuthService } from './auth.service';
 import { UserModule } from '../user/user.module';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-// import { AuthGuard } from './auth.guard';
 import { PassportModule } from '@nestjs/passport';
-import { LocalStrategy } from './passport/local.strategy';
 import { JwtStrategy } from './passport/jwt.strategy';
 import { RolesGuard } from './role/roles.guard';
+import { GoogleStrategy } from './passport/google.strategy';
+import { LocalStrategy } from './passport/local.strategy';
 
 @Module({
   imports: [
@@ -17,20 +17,25 @@ import { RolesGuard } from './role/roles.guard';
     ConfigModule,
     ConfigModule.forRoot({ isGlobal: true }),
     JwtModule.registerAsync({
-      imports: [ConfigModule], // Import ConfigModule here as well
+      imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
         global: true,
-        secret: configService.get<string>('SECRET_KEY'), // 'secretOrPrivateKe i,s deprecated, use 'secret'
+        secret: configService.get<string>('SECRET_KEY'),
         signOptions: {
           expiresIn: configService.get<string>('SECRET_KEY_EXPIRESIN'),
         },
       }),
       inject: [ConfigService],
-
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, LocalStrategy, JwtStrategy , RolesGuard],
-  exports:[AuthService]
+  providers: [
+    AuthService,
+    LocalStrategy,
+    JwtStrategy,
+    GoogleStrategy,
+    RolesGuard,
+  ],
+  exports: [AuthService],
 })
 export class AuthModule {}

@@ -6,52 +6,55 @@ import { User } from './schemas/user.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import { hassPasswordHelper } from 'src/util/helper';
 import { v4 as uuidv4 } from 'uuid';
-import dayjs from 'dayjs'
+import dayjs from 'dayjs';
 
 @Injectable()
 export class UserService {
-
-  constructor(@InjectModel(User.name) private userModel: Model<User>) { }
-
+  constructor(@InjectModel(User.name) private userModel: Model<User>) {}
 
   async isEmailExist(email: string) {
     try {
-      const user = await this.userModel.exists({ email })
-      if (user) return true
-      return false
-    } catch (error) {
-    }
+      const user = await this.userModel.exists({ email });
+      if (user) return true;
+      return false;
+    } catch (error) {}
   }
   async create(data: CreateUserDto) {
-    const { email, password, name } = data
-    const checkEmail = await this.isEmailExist(email)
+    const { email, password, name } = data;
+    const checkEmail = await this.isEmailExist(email);
     if (checkEmail) {
-      throw new BadRequestException(`Email đã tồn tại! Vui lòng sử dụng email khác: ${email}`);
+      throw new BadRequestException(
+        `Email đã tồn tại! Vui lòng sử dụng email khác: ${email}`,
+      );
     }
-    const hassPassword = await hassPasswordHelper(password)
-    const newUser = new this.userModel({ email, password: hassPassword, name, codeId: uuidv4(), codeExpire: dayjs().second(60) });
-    return newUser.save()
+    const hassPassword = await hassPasswordHelper(password);
+    const newUser = new this.userModel({
+      email,
+      password: hassPassword,
+      name,
+      codeId: uuidv4(),
+      codeExpire: dayjs().second(60),
+    });
+    return newUser.save();
   }
 
   async findAll(data: any) {
-    const { page, rowPage, filter } = data
-    const skip = (+page - 1) * rowPage
+    const { page, rowPage, filter } = data;
+    const skip = (+page - 1) * rowPage;
 
     const userAll = await this.userModel.aggregate([
-      // { $match: { isActive: true } },     
+      // { $match: { isActive: true } },
       {
         $facet: {
           data: [
-            // { $sort: { age: -1 } },        
+            // { $sort: { age: -1 } },
             { $skip: skip },
             { $limit: +rowPage },
-            { $project: { name: 1, email: 1, password: 1, role: 1 } }
+            { $project: { name: 1, email: 1, password: 1, role: 1 } },
           ],
-          total: [
-            { $count: "total" }
-          ]
-        }
-      }
+          total: [{ $count: 'total' }],
+        },
+      },
     ]);
     const users = userAll[0].data;
     const totalUsers = userAll[0].total[0]?.total || 0;
@@ -59,17 +62,23 @@ export class UserService {
     return {
       data: users,
       totalUsers,
-      currentPage: page
-    }
+      currentPage: page,
+    };
+  }
+
+  async findOne(id: string) {
+    return this.userModel.findById(id);
   }
 
   async checkAccount(email: string) {
     try {
-      const user = await this.userModel.findOne({ email })
-      if (user) return user
-      throw new BadRequestException("Email chưa được đăng ký vui lòng đăng ký tài khoản để đăng nhập")
+      const user = await this.userModel.findOne({ email });
+      if (user) return user;
+      throw new BadRequestException(
+        'Email chưa được đăng ký vui lòng đăng ký tài khoản để đăng nhập',
+      );
     } catch (error) {
-      console.log(error)
+      console.log(error);
     }
   }
 
@@ -78,14 +87,50 @@ export class UserService {
   }
 
   async update(id: string, data: UpdateUserDto) {
-    const { name, email, password } = data
-    let hashPass = password
-    if (password) hashPass = await hassPasswordHelper(password)
-    const user = await this.userModel.findByIdAndUpdate(id, { name, email, password: hashPass }, { new: true })
-    return user
+    const { name, email, password } = data;
+    let hashPass = password;
+    if (password) hashPass = await hassPasswordHelper(password);
+    const user = await this.userModel.findByIdAndUpdate(
+      id,
+      { name, email, password: hashPass },
+      { new: true },
+    );
+    return user;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} user`;
+  async remove(id: string) {
+    return this.userModel.findByIdAndDelete(id);
+  }
+
+  async findOrCreateGoogleUser(data: {
+    email?: string;
+    name: string;
+    avatar?: string;
+    googleId: string;
+  }) {
+    const { email, name, avatar, googleId } = data;
+    let user: any = null;
+    if (email) {
+      user = await this.userModel.findOne({ email });
+    }
+    if (!user) {
+      user = await this.userModel.findOne({ googleId });
+    }
+    if (user) {
+      // update avatar/name if changed
+      user.name = user.name || name;
+      if (avatar && user.avatar !== avatar) user.avatar = avatar;
+      if (!user.googleId) user.googleId = googleId;
+      await user.save();
+      return user;
+    }
+    const newUser = new this.userModel({
+      email,
+      name,
+      avatar,
+      googleId,
+      isActive: true,
+    });
+    return newUser.save();
   }
 }

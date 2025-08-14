@@ -14,6 +14,12 @@ export class User {
   @Prop()
   password: string;
 
+  @Prop()
+  googleId?: string;
+
+  @Prop()
+  avatar?: string;
+
   @Prop({ default: 0 })
   roles: number;
 
@@ -25,7 +31,6 @@ export class User {
 
   @Prop()
   codeExpire: Date;
-
 
   @Prop({ type: Date, default: () => new Date() })
   createAt: Date;
